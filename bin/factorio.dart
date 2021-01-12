@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 abstract class Connectable {}
@@ -6,27 +7,104 @@ abstract class Updatable {
   void update();
 }
 
-class Usine implements Connectable, Updatable {
+abstract class Usine implements Connectable, Updatable {
+  bool active;
+  int production;
+  int consommation;
+  int stockRessource;
+  int stockProduit;
+  Ressource ressource;
+  Produit produit;
+
+  Usine(){
+    active = false;
+  }
+
+  void produire(){
+    while(stockRessource>=consommation){
+      for(int i=0 ; i<production; i++){
+        stockProduit += 1;
+        stockRessource -= consommation;
+      }
+    }
+  }
+  
   void update(){
-    stock += 1 * Bois;
+    this.produire();
   }
 }
 
 // Scierie, fabrique, ...
-class Scierie extends Usine {}
+class Scierie extends Usine {
+  Scierie(){
+    bool active = true;
+    int production = 200;
+    int consommation = 4;
+    int stockRessource = 0;
+    int stockProduit = 0;
+    Ressource ressource = Bois();
+    Produit produit = Planche();
+  }
+}
+class Produit {
 
-class Resource {}
+}
+
+class Planche extends Produit{
+
+}
+class Ressource {
+  final int kilo = 1;
+  String nom;
+  int valeur;
+  int densite;
+}
 // Bois, fer, ...
 
-class Deposit implements Connectable, Updatable {}
+class Bois extends Ressource {
+  Bois(){
+    nom = "Bois";
+    valeur = 3;
+    densite = 350;
+  }
+}
+
+class Deposit implements Connectable, Updatable {
+  Ressource ressource;
+  int nbRessources;
+
+  void extraire(int nbRessources){
+    this.nbRessources -= nbRessources;
+  }
+
+  void regenerer(){
+    this.nbRessources += 50;
+  }
+
+  void update(){
+    this.regenerer();
+  }
+}
 
 // Foret, Mine,
-class Foret extends Deposit {}
+class Foret extends Deposit {
+  Foret(){
+    ressource = Bois();
+    nbRessources = 5000;
+  }
+}
 
-class Ville implements Connectable, Updatable {}
+class Ville implements Connectable, Updatable {
+  String nom;
+
+  void update(){
+
+  }
+}
 
 class Connection implements Updatable {
   Connection(Connectable c1, Connectable c2);
+  void update(){}
 }
 
 /*
@@ -41,32 +119,61 @@ planche + clous  --> fabrique de meubles --> meuble
 meuble --> ville --> argent;
 
 */
+enum EnumInput {CLOSE,BUILD,PASS,SAVE}
 
-class Jeu{
+class Jeu {
+  EnumInput inputE;
+  String input;
+  bool flag = true;
   final updatables =<Updatable>[];
   void run(){
-    while (true) {
-      updatables.forEach((element) {element.update()});
+    print(clean());
+    while (flag) {
       print(toString());
+      input = stdin.readLineSync(encoding: Encoding.getByName('utf-8'));
+      gererDeroulement(input);
+      print(clean());
     }
   }
-  String toString(){
-    print("\x1b[2J\x1b[H");
 
+  void gererDeroulement(String action) {
+    switch (action) {
+      case "1": 
+        flag = false;
+        break;
+      case "2":
+        construire();
+        break;
+      case "3":
+        passerTour();
+        break;
+      case "4":
+        passerTour();
+        break;
+      default:
+    }
+  }
+
+  void construire(){
+    updatables.add(Ville());
+  }
+
+  void passerTour(){
+    updatables.forEach((element) {element.update();});
+  }
+
+  String clean(){
+    return "\x1b[2J\x1b[H";
+  }
+
+
+  String toString(){
+    return "allo";
   }
 
 }
 
 void main(List<String> arguments) {
-  print("hello");
-  if (Platform.isWindows) {
-    // not tested, I don't have Windows
-    // may not to work because 'cls' is an internal command of the Windows shell
-    // not an executeable
-    print(Process.runSync("cls", [], runInShell: true).stdout);
-  } else {
-    print(Process.runSync("clear", [], runInShell: true).stdout);
-  }
-  print("\x1B[2J\x1B[0;0H");
-  print("World");
+  var jeu = Jeu();
+  jeu.run();
 }
